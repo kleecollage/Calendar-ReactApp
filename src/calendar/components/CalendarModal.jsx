@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Modal from 'react-modal';
 
 import DatePicker, { registerLocale } from "react-datepicker";
@@ -9,6 +9,8 @@ import { es } from 'date-fns/locale/es';
 
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css'
+
+import { useUiStore, useCalendarStore } from '../../hooks';
 
 
 registerLocale('es', es)
@@ -29,12 +31,13 @@ Modal.setAppElement('#root');
 
 export const CalendarModal = () => {
     
-    const [isOpen, setIsOpen] = useState(true)
+    const { isDateModalOpen, closeDateModal } = useUiStore();
     const [formSubmitted, setFormSubmitted] = useState(false);
+    const { activeEvent, startSavingEvent } = useCalendarStore()
 
     const [formValues, setFormValues] = useState({
-        title: 'Antonio',
-        notes: 'Hernandez',
+        title: '',
+        note: '',
         start: new Date(),
         end: addHours(new Date(), 2)
     });
@@ -45,6 +48,13 @@ export const CalendarModal = () => {
             ? ''
             : 'is-invalid';
     }, [formValues.title, formSubmitted])
+
+    useEffect(() => {
+        if (activeEvent !== null) {
+          setFormValues({...activeEvent})
+      }
+    }, [activeEvent])
+    
 
     const onInputChange = ({ target }) => {
         setFormValues({
@@ -62,10 +72,10 @@ export const CalendarModal = () => {
     
     const onCloseModal = () => {
         // console.log('cerrando modal')
-        setIsOpen(false)
+        closeDateModal();
     }
 
-    const onSubmit = (event) => {
+    const onSubmit = async(event) => {
         event.preventDefault();
         setFormSubmitted(true)
         const difference = differenceInSeconds(formValues.end, formValues.start)
@@ -75,6 +85,10 @@ export const CalendarModal = () => {
         }
         if (formValues.title.length <= 0) return;
         console.log(formValues)
+
+        await startSavingEvent( formValues );
+        closeDateModal();
+        setFormSubmitted(false)
     }
 
   return (
@@ -82,7 +96,7 @@ export const CalendarModal = () => {
         className="modal"
         overlayClassName="modal-fondo"
         closeTimeoutMS={ 200 }
-        isOpen={ isOpen }
+        isOpen={ isDateModalOpen }
         onRequestClose={ onCloseModal }
         style={ customStyles }
         contentLabel="Example Modal"
@@ -145,8 +159,8 @@ export const CalendarModal = () => {
                     className="form-control"
                     placeholder="Notas"
                     rows="5"
-                    name="notes"
-                    value={formValues.notes}
+                    name="note"
+                    value={formValues.note}
                     onChange={onInputChange}
                 ></textarea>
                 <small id="emailHelp" className="form-text text-muted">Información adicional</small>

@@ -1,8 +1,8 @@
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux"
+import Swal from "sweetalert2";
 import { calendarApi } from "../api";
 import { onChecking, onLogin, onLogout, clearErrorMessage, onLogoutCalendar } from "../store";
-import { useEffect } from "react";
-import Swal from "sweetalert2";
 
 export const useAuthStore = () => {
 
